@@ -120,8 +120,11 @@ class ServiceLoader():
 
         def register(bind, require):
             for name in names:
+                bind(name, to_class=implementation_class,  in_scope=pinject.SINGLETON if singleton else pinject.PROTOTYPE)
                 bind(convert(name), to_class=implementation_class,  in_scope=pinject.SINGLETON if singleton else pinject.PROTOTYPE)
+
         spec = SomeBindingSpec(names, register)
+
         def provider():
 
             self.object_graph.inject_method(implementation_class, *args, **kwargs)()
