@@ -18,11 +18,11 @@
 from distutils.core import setup
 
 
-setup(name='pinject',
-      version='0.10.2',
+setup(name='serviceloader',
+      version='0.10.3',
       description='A variation on a pythonic dependency injection library',
       author='Andrew Jefferson',
-      author_email='kurt@steinkraus.us',
+      author_email='andrew@tractable.io',
       url='https://github.com/eastlondoner/pinject',
       license='Apache License 2.0',
       long_description=open('README.rst').read(),
