@@ -49,3 +49,12 @@ class NeedyClassWithOptionalArg(BaseNeedyClass):
         super(BaseNeedyClass, self).__init__()
         print thing
         assert thing
+
+
+
+class NeedyClassWhichNeedsClassInModule(BaseNeedyClass):
+
+    def __init__(self, class_in_module=None):
+        super(BaseNeedyClass, self).__init__()
+        print class_in_module
+        assert class_in_module

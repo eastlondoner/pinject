@@ -50,6 +50,7 @@ class ServiceLoader():
         self._class_mappings = {}
         self._arg_mappings = {}
         self._classes = []
+        self._modules = set()
 
     @lazy
     def object_graph(self):
@@ -59,7 +60,7 @@ class ServiceLoader():
 
         """
 
-        og = pinject.new_object_graph(binding_specs=self._binding_specs, modules=None, classes=self._classes)
+        og = pinject.new_object_graph(binding_specs=self._binding_specs, modules=list(self._modules), classes=self._classes)
 
         def call_with_injection(self, fn, *direct_pargs, **direct_kwargs):
             return self._obj_provider.call_with_injection(fn, self._injection_context_factory.new(fn), direct_pargs, direct_kwargs)
@@ -79,6 +80,14 @@ class ServiceLoader():
         self._object_graph_initialised = True
         return og
 
+    def register_module(self, module):
+        assert isinstance(module, types.ModuleType)
+        self._modules.add(module)
+
+    def register_modules(self, modules):
+        modules = set(modules)
+        assert all((isinstance(module, types.ModuleType) for module in modules))
+        self._modules.update(modules)
 
     def register_implementation(self, implementation_class, base_class=None, with_name=None, singleton=False, args=(), kwargs={}):
         """
