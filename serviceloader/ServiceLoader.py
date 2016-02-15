@@ -67,7 +67,8 @@ class ServiceLoader():
         def inject_method(self, fn, *args, **kwargs):
 
             pargs, kwargs = self._obj_provider.get_injection_pargs_kwargs(fn.__init__ if inspect.isclass(fn) else fn, self._injection_context_factory.new(fn), args, kwargs)
-
+            print "pargs", pargs
+            print "kwargs", kwargs
             return functools.partial(fn, *pargs, **kwargs)
 
         ## MONKEY PATCHING HAHAHAHA
