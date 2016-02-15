@@ -36,7 +36,7 @@ class SomeBindingSpec(pinject.BindingSpec):
 fetch_lock = Lock()
 def fetch_service_loader(name):
     with fetch_lock:
-        sl = service_loaders.get(name, ServiceLoader(name))
+        sl = _.result(service_loaders.get(name, lambda: ServiceLoader(name)))
     return sl
 
 class ServiceLoader():
