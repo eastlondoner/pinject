@@ -67,6 +67,7 @@ class ServiceLoader():
         def inject_method(self, fn, *args, **kwargs):
 
             pargs, kwargs = self._obj_provider.get_injection_pargs_kwargs(fn.__init__ if inspect.isclass(fn) else fn, self._injection_context_factory.new(fn), args, kwargs)
+            print "Injecting", fn
             print "pargs", pargs
             print "kwargs", kwargs
             return functools.partial(fn, *pargs, **kwargs)
@@ -112,7 +113,9 @@ class ServiceLoader():
         else:
             names += [clazz.__name__ for clazz in inspect.getmro(implementation_class) if inspect.isclass(clazz)]
 
-        names = list(set(names) - set(['object']))
+        names += [name.replace('Base','').replace('Abstract','') for name in names if name.startswith('Base') or name.startswith('Abstract')]
+
+        names = list(set(names) - {'object'})
         map(lambda name: self._class_mappings.update({name:implementation_class}), names)
         #names = map(convert, names)
         print "Registering {} for :".format(implementation_class), names
@@ -120,8 +123,10 @@ class ServiceLoader():
 
         def register(bind, require):
             for name in names:
+                #bind(name, to_class=implementation_class,  in_scope=pinject.SINGLETON if singleton else pinject.PROTOTYPE)
+                name = convert(name)
                 bind(name, to_class=implementation_class,  in_scope=pinject.SINGLETON if singleton else pinject.PROTOTYPE)
-                bind(convert(name), to_class=implementation_class,  in_scope=pinject.SINGLETON if singleton else pinject.PROTOTYPE)
+                print "binding", name
 
         spec = SomeBindingSpec(names, register)
 

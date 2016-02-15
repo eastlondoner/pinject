@@ -287,7 +287,7 @@ def get_injectable_arg_binding_keys(fn, direct_pargs, direct_kwargs):
 
     arg_names, unused_varargs, unused_keywords, defaults = (
         inspect.getargspec(orig_fn))
-    num_args_with_defaults = len(defaults) if defaults is not None else 0
+    num_args_with_defaults = 0 #len(defaults) if defaults is not None else 0
     if num_args_with_defaults:
         arg_names = arg_names[:-num_args_with_defaults]
     unbound_injectable_arg_names = arg_binding_keys.get_unbound_arg_names(
