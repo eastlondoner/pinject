@@ -20,11 +20,14 @@ from distutils.core import setup
 
 setup(name='pinject',
       version='0.10.2',
-      description='A pythonic dependency injection library',
-      author='Kurt Steinkraus',
+      description='A variation on a pythonic dependency injection library',
+      author='Andrew Jefferson',
       author_email='kurt@steinkraus.us',
-      url='https://github.com/google/pinject',
+      url='https://github.com/eastlondoner/pinject',
       license='Apache License 2.0',
       long_description=open('README.rst').read(),
       platforms='all',
-      packages=['pinject', 'pinject/third_party'])
+      packages=['pinject', 'pinject/third_party', 'serviceloader'],
+      install_requires=[
+      'lazy',
+  ])

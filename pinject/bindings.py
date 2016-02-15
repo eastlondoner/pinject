@@ -133,6 +133,7 @@ class BindingMapping(object):
                 injection_site_desc, binding_key,
                 self._collided_binding_key_to_bindings[binding_key])
         else:
+            return None
             raise errors.NothingInjectableForArgError(
                 binding_key, injection_site_desc)
 

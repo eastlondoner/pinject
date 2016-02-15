@@ -33,6 +33,8 @@ class ObjectProvider(object):
         binding_key = arg_binding_key.binding_key
         binding = self._binding_mapping.get(
             binding_key, injection_context.get_injection_site_desc())
+        if binding is None:
+            return None
         scope = self._bindable_scopes.get_sub_scope(binding)
         def Provide(*pargs, **kwargs):
             # TODO(kurts): probably capture back frame's file:line for
@@ -78,9 +80,9 @@ class ObjectProvider(object):
 
     def get_injection_pargs_kwargs(self, fn, injection_context,
                                    direct_pargs, direct_kwargs):
-        di_kwargs = arg_binding_keys.create_kwargs(
-            decorators.get_injectable_arg_binding_keys(
-                fn, direct_pargs, direct_kwargs),
+        injectable_keys = decorators.get_injectable_arg_binding_keys(
+                fn, direct_pargs, direct_kwargs)
+        di_kwargs = arg_binding_keys.create_kwargs(injectable_keys,
             lambda abk: self.provide_from_arg_binding_key(
                 fn, abk, injection_context))
         duplicated_args = set(di_kwargs.keys()) & set(direct_kwargs.keys())
