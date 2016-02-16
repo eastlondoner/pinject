@@ -51,10 +51,36 @@ class NeedyClassWithOptionalArg(BaseNeedyClass):
         assert thing
 
 
-
 class NeedyClassWhichNeedsClassInModule(BaseNeedyClass):
 
     def __init__(self, class_in_module=None):
         super(BaseNeedyClass, self).__init__()
         print class_in_module
         assert class_in_module
+
+class NeedyClassWhichNeedsFunction(BaseNeedyClass):
+    def __init__(self, hello_world):
+        super(BaseNeedyClass, self).__init__()
+        hello_world()
+
+class NeedyClassWhichNeedsFunctionInjection(BaseNeedyClass):
+    def __init__(self, hello_from):
+        super(BaseNeedyClass, self).__init__()
+        hello_from('dave')
+
+class NeedyClassWhichNeedsCurriedFunction(BaseNeedyClass):
+    def __init__(self, hello_from):
+        super(BaseNeedyClass, self).__init__()
+        hello_from()
+
+
+
+class NeedyClassWhichNeedsFunctionInModule(BaseNeedyClass):
+
+    def __init__(self, function_in_module=None):
+        super(BaseNeedyClass, self).__init__()
+        print function_in_module
+        assert function_in_module
+
+
+

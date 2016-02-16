@@ -48,7 +48,8 @@ class ServiceLoader():
         self._object_graph_initialised = False
         self._binding_specs = []
         self._class_mappings = {}
-        self._arg_mappings = {}
+        self._function_mappings = {}
+        self._class_arg_mappings = {}
         self._classes = []
         self._modules = set()
 
@@ -79,6 +80,30 @@ class ServiceLoader():
 
         self._object_graph_initialised = True
         return og
+
+    def register_function(self, fn, with_name=None, kwargs={}):
+        """
+        We deliberately don't take an args param because we think it is safer. If you must provide positional args then explicitly curry your function using partial
+        Args:
+            fn:
+            with_name:
+            kwargs:
+
+        """
+        assert inspect.isfunction(fn)
+        name = with_name if with_name else fn.__name__
+
+        this = self
+        # Here we dynamically create a class that conforms to pinject's requirements
+        def provider(self):
+            return this.object_graph.inject_method(fn, **kwargs)
+        fn_name = "provide_{}".format(name)
+        provider.__name__ = fn_name
+        provider_spec = type('BindingSpec{}'.format(len(self._binding_specs)), (pinject.BindingSpec,), {fn_name: provider})
+        provider_spec = provider_spec()
+        self._binding_specs.append(provider_spec)
+
+        self._function_mappings[name] = (fn, kwargs)
 
     def register_module(self, module):
         assert isinstance(module, types.ModuleType)
@@ -126,33 +151,41 @@ class ServiceLoader():
 
         names = list(set(names) - {'object'})
         map(lambda name: self._class_mappings.update({name:implementation_class}), names)
-        #names = map(convert, names)
+
         print "Registering {} for :".format(implementation_class), names
 
-
-        def register(bind, require):
-            for name in names:
+        #def register(bind, require):
+        #    for name in names:
                 #bind(name, to_class=implementation_class,  in_scope=pinject.SINGLETON if singleton else pinject.PROTOTYPE)
-                name = convert(name)
-                bind(name, to_class=implementation_class,  in_scope=pinject.SINGLETON if singleton else pinject.PROTOTYPE)
-                print "binding", name
+        #        name = convert(name)
+                #bind(name, to_class=implementation_class,  in_scope=pinject.SINGLETON if singleton else pinject.PROTOTYPE)
+        #        print "binding class", name
+        #spec = SomeBindingSpec(names, register)
+        #self._binding_specs.append(spec)
 
-        spec = SomeBindingSpec(names, register)
+        this = self
 
-        def provider():
+        for name in (convert(name) for name in names):
+            # Here we dynamically create a class that conforms to pinject's requirements
+            def provider(self):
+                args, kwargs = this._class_arg_mappings[implementation_class.__name__]
+                return this.object_graph.inject_method(implementation_class, *args, **kwargs)()
+            fn_name = "provide_{}".format(name)
+            provider.__name__ = fn_name
+            provider_spec = type('BindingSpec{}'.format(len(self._binding_specs)), (pinject.BindingSpec,), {fn_name: provider})
+            provider_spec = provider_spec()
+            self._binding_specs.append(provider_spec)
 
-            self.object_graph.inject_method(implementation_class, *args, **kwargs)()
+        self._class_arg_mappings[implementation_class.__name__] = (args if args else (), kwargs if kwargs else {})
 
 
-        map(lambda name: monkey_patch_instance(spec, "provide_{}".format(name), provider), names)
-        map(lambda name: setattr(SomeBindingSpec, "provide_{}".format(name), provider), names)
-
-        self._arg_mappings[implementation_class.__name__] = (args if args else (), kwargs if kwargs else {})
-
-        self._binding_specs.append(spec)
 
     def load_class(self, clazz):
         clazz = self._class_mappings.get(clazz.__name__, clazz)
-        args, kwargs = self._arg_mappings[clazz.__name__]
+        args, kwargs = self._class_arg_mappings[clazz.__name__]
         return self.object_graph.inject_method(clazz, *args, **kwargs)()
 
+    def apply(self, fn_name, *args, **kwargs):
+        fn, config_kwargs = self._function_mappings[fn_name]
+        kwargs.update(config_kwargs)
+        return self.object_graph.inject_method(fn, *args, **kwargs)()
