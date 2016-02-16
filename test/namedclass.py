@@ -14,6 +14,14 @@ class BaseNeedyClass(object):
         pass
 
 
+class SimpleNeedyClass(BaseNeedyClass):
+
+    def __init__(self, thing):
+        super(BaseNeedyClass, self).__init__()
+        assert thing
+        self.thing = thing
+
+
 class NeedyClass(BaseNeedyClass):
 
     def __init__(self, data, base_thing,

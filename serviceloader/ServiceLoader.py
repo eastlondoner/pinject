@@ -7,6 +7,7 @@ import re
 import pinject.bindings
 from threading import Lock
 import tdash as _
+import pinject.arg_binding_keys as arg_binding_keys
 
 
 first_cap_re = re.compile('(.)([A-Z][a-z]+)')
@@ -66,9 +67,21 @@ class ServiceLoader():
         def call_with_injection(self, fn, *direct_pargs, **direct_kwargs):
             return self._obj_provider.call_with_injection(fn, self._injection_context_factory.new(fn), direct_pargs, direct_kwargs)
 
-        def inject_method(self, fn, *args, **kwargs):
+        def provide_class(self, clazz, *args, **kwargs):
 
-            pargs, kwargs = self._obj_provider.get_injection_pargs_kwargs(fn.__init__ if inspect.isclass(fn) else fn, self._injection_context_factory.new(fn), args, kwargs)
+            isclass = inspect.isclass(clazz)
+            assert isclass
+            arg_binding_key = arg_binding_keys.new(convert(clazz.__name__))
+            injection_context = self._injection_context_factory.new(clazz.__init__)
+
+            c = self._obj_provider.provide_from_arg_binding_key(clazz, arg_binding_key, injection_context, pargs=args, kwargs=kwargs)
+            return c #self._obj_provider.provide_class(c, injection_context, direct_init_pargs=args, direct_init_kwargs=kwargs)
+
+        def inject_method(self, fn, *args, **kwargs):
+            isclass = inspect.isclass(fn)
+            injection_context = self._injection_context_factory.new(fn.__init__ if isclass else fn)
+
+            pargs, kwargs = self._obj_provider.get_injection_pargs_kwargs(fn.__init__ if isclass else fn, injection_context, args, kwargs)
             print "Injecting", fn
             print "pargs", pargs
             print "kwargs", kwargs
@@ -77,6 +90,7 @@ class ServiceLoader():
         ## MONKEY PATCHING HAHAHAHA
         monkey_patch_instance(og, 'call_with_injection', call_with_injection)
         monkey_patch_instance(og, 'inject_method', inject_method)
+        monkey_patch_instance(og, 'provide_class', provide_class)
 
         self._object_graph_initialised = True
         return og
@@ -97,11 +111,7 @@ class ServiceLoader():
         # Here we dynamically create a class that conforms to pinject's requirements
         def provider(self):
             return this.object_graph.inject_method(fn, **kwargs)
-        fn_name = "provide_{}".format(name)
-        provider.__name__ = fn_name
-        provider_spec = type('BindingSpec{}'.format(len(self._binding_specs)), (pinject.BindingSpec,), {fn_name: provider})
-        provider_spec = provider_spec()
-        self._binding_specs.append(provider_spec)
+        self.add_provider(name, provider, singleton=True)
 
         self._function_mappings[name] = (fn, kwargs)
 
@@ -114,7 +124,26 @@ class ServiceLoader():
         assert all((isinstance(module, types.ModuleType) for module in modules))
         self._modules.update(modules)
 
-    def register_implementation(self, implementation_class, base_class=None, with_name=None, singleton=False, args=(), kwargs={}):
+    def add_provider(self, name, provider, singleton):
+        """
+
+        Args:
+            name:
+            provider:
+            :type provider: function
+            singleton:
+
+        Returns:
+
+        """
+        fn_name = "provide_{}".format(name)
+        provider.__name__ = fn_name
+        provider = pinject.provides(in_scope=pinject.PROTOTYPE)(provider) if not singleton else provider
+        provider_spec = type('BindingSpec{}'.format(len(self._binding_specs)), (pinject.BindingSpec,), {fn_name: provider})
+        provider_spec = provider_spec()
+        self._binding_specs.append(provider_spec)
+
+    def register_implementation(self, implementation_class, register_super_classes=True, with_name=None, singleton=False, args=(), kwargs={}):
         """
         Registers implementation_class as the implementation for implementation class and all its base classes
 
@@ -140,11 +169,7 @@ class ServiceLoader():
         self._classes.append(implementation_class)
         names = [implementation_class.__name__, with_name] if with_name else [implementation_class.__name__]
 
-        if base_class:
-            assert inspect.isclass(base_class)
-            assert issubclass(implementation_class, base_class)
-            names.append(base_class.__name__)
-        else:
+        if register_super_classes:
             names += [clazz.__name__ for clazz in inspect.getmro(implementation_class) if inspect.isclass(clazz)]
 
         names += [name.replace('Base','').replace('Abstract','') for name in names if name.startswith('Base') or name.startswith('Abstract')]
@@ -155,8 +180,7 @@ class ServiceLoader():
         print "Registering {} for :".format(implementation_class), names
 
         #def register(bind, require):
-        #    for name in names:
-                #bind(name, to_class=implementation_class,  in_scope=pinject.SINGLETON if singleton else pinject.PROTOTYPE)
+        #     bind(convert(implementation_class.__name__), to_class=implementation_class,  in_scope=pinject.SINGLETON if singleton else pinject.PROTOTYPE)
         #        name = convert(name)
                 #bind(name, to_class=implementation_class,  in_scope=pinject.SINGLETON if singleton else pinject.PROTOTYPE)
         #        print "binding class", name
@@ -165,16 +189,19 @@ class ServiceLoader():
 
         this = self
 
-        for name in (convert(name) for name in names):
+        for name in (convert(name) for name in names if not name == implementation_class.__name__):
             # Here we dynamically create a class that conforms to pinject's requirements
             def provider(self):
                 args, kwargs = this._class_arg_mappings[implementation_class.__name__]
+                return this.object_graph.provide_class(implementation_class, *args, **kwargs)
+            self.add_provider(name, provider, singleton)
+
+        for name in (convert(name) for name in names if name == implementation_class.__name__):
+            # Here we dynamically create a class that conforms to pinject's requirements
+            def provider(self, **kwargs):
+                #args, kwargs = this._class_arg_mappings[implementation_class.__name__]
                 return this.object_graph.inject_method(implementation_class, *args, **kwargs)()
-            fn_name = "provide_{}".format(name)
-            provider.__name__ = fn_name
-            provider_spec = type('BindingSpec{}'.format(len(self._binding_specs)), (pinject.BindingSpec,), {fn_name: provider})
-            provider_spec = provider_spec()
-            self._binding_specs.append(provider_spec)
+            self.add_provider(name, provider, singleton)
 
         self._class_arg_mappings[implementation_class.__name__] = (args if args else (), kwargs if kwargs else {})
 
@@ -183,7 +210,7 @@ class ServiceLoader():
     def load_class(self, clazz):
         clazz = self._class_mappings.get(clazz.__name__, clazz)
         args, kwargs = self._class_arg_mappings[clazz.__name__]
-        return self.object_graph.inject_method(clazz, *args, **kwargs)()
+        return self.object_graph.provide_class(clazz, *args, **kwargs)
 
     def apply(self, fn_name, *args, **kwargs):
         fn, config_kwargs = self._function_mappings[fn_name]

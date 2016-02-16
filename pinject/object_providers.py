@@ -29,22 +29,30 @@ class ObjectProvider(object):
         self._allow_injecting_none = allow_injecting_none
 
     def provide_from_arg_binding_key(
-            self, injection_site_fn, arg_binding_key, injection_context):
+            self, injection_site_fn, arg_binding_key, injection_context,
+            pargs=(), kwargs={}
+    ):
         binding_key = arg_binding_key.binding_key
         binding = self._binding_mapping.get(
             binding_key, injection_context.get_injection_site_desc())
         if binding is None:
             return None
         scope = self._bindable_scopes.get_sub_scope(binding)
-        def Provide(*pargs, **kwargs):
+        def Provide(*inner_pargs, **inner_kwargs):
             # TODO(kurts): probably capture back frame's file:line for
             # DirectlyPassingInjectedArgsError.
+
+            p_args = () + inner_pargs + pargs
+            kw_args = dict()
+            kw_args.update(kwargs)
+            kw_args.update(inner_kwargs)
+
             child_injection_context = injection_context.get_child(
                 injection_site_fn, binding)
             provided = scope.provide(
                 binding_key,
                 lambda: binding.proviser_fn(child_injection_context, self,
-                                            pargs, kwargs))
+                                            p_args, kw_args))
             if (provided is None) and not self._allow_injecting_none:
                 raise errors.InjectingNoneDisallowedError(
                     binding.get_binding_target_desc_fn())
@@ -67,6 +75,9 @@ class ObjectProvider(object):
             init_pargs, init_kwargs = self.get_injection_pargs_kwargs(
                 cls.__init__, injection_context,
                 direct_init_pargs, direct_init_kwargs)
+            print "providing class", cls
+            print "args", init_pargs
+            print "kwargs", init_kwargs
         else:
             init_pargs = direct_init_pargs
             init_kwargs = direct_init_kwargs

@@ -73,6 +73,35 @@ assert sl.load_class(BaseNeedyClass)
 sl.apply("hello_world")
 
 
+sl = fetch_service_loader('not_singleton')
+
+sl.register_implementation(SimpleNeedyClass)
+sl.register_implementation(NamedClass)
+
+implementation_1 = sl.load_class(BaseNeedyClass)
+implementation_2 = sl.load_class(BaseNeedyClass)
+assert implementation_1.thing is not implementation_2.thing
+
+sl = fetch_service_loader('singleton_dependency')
+
+sl.register_implementation(SimpleNeedyClass)
+sl.register_implementation(NamedClass, singleton=True)
+
+implementation_1 = sl.load_class(BaseNeedyClass)
+implementation_2 = sl.load_class(BaseNeedyClass)
+assert implementation_1.thing is implementation_2.thing
+
+
+sl = fetch_service_loader('singleton_top_level')
+
+sl.register_implementation(NamedClass, singleton=True)
+
+implementation_1 = sl.load_class(NamedClass)
+implementation_2 = sl.load_class(NamedClass)
+assert implementation_1 is implementation_2
+
+
+
 
 
 """
