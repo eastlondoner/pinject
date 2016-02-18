@@ -194,7 +194,6 @@ class ServiceLoader():
             def provider(self):
                 args, kwargs = this._class_arg_mappings[implementation_class.__name__]
                 return this.object_graph.provide_class(implementation_class, *args, **kwargs)
-            print 'Alias: ', name
             self.add_provider(name, provider, singleton)
 
         for name in (convert(name) for name in names if name == implementation_class.__name__):
