@@ -217,7 +217,7 @@ class ServiceLoader():
         for name in (convert(name) for name in names if name == implementation_class.__name__):
             # Here we dynamically create a class that conforms to pinject's requirements
             def provider(self, **kwargs):
-                #args, kwargs = this._class_arg_mappings[implementation_class.__name__]
+                args, kwargs = this._class_arg_mappings[implementation_class.__name__]
                 try:
                     injected = this.object_graph.inject_method(implementation_class, *args, **kwargs)
                     return injected()
