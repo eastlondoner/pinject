@@ -9,6 +9,16 @@ class NamedClass(BaseThing):
         super(NamedClass, self).__init__()
 
 
+class ErrorCausingClass(BaseThing):
+    def __init__(self, other):
+        super(ErrorCausingClass, self).__init__()
+        thing = 5
+        thing = thin * 2
+
+class ErrorDependentClass(object):
+    def __init__(self, error_causing_class):
+        pass
+
 class BaseNeedyClass(object):
     def __init__(self):
         pass
@@ -92,3 +102,8 @@ class NeedyClassWhichNeedsFunctionInModule(BaseNeedyClass):
 
 
 
+class NeedyClassWhichCausesError(BaseNeedyClass):
+
+    def __init__(self, error_dependent_class):
+        assert False # we should never get here
+        super(BaseNeedyClass, self).__init__()

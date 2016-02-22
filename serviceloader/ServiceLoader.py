@@ -4,6 +4,7 @@ import types
 import functools
 import inspect
 import re
+import sys
 import pinject.bindings
 from threading import Lock
 import tdash as _
@@ -39,6 +40,19 @@ def fetch_service_loader(name):
     with fetch_lock:
         sl = _.result(service_loaders.get(name, lambda: ServiceLoader(name)))
     return sl
+
+
+def handle_provider_error(implementation_class, injected, exception):
+    isclass = inspect.isclass(injected.func)
+    fn = injected.func.__init__ if isclass else injected.func
+    required,__,___,defaults = inspect.getargspec(fn)
+    if defaults:
+        required = required[0:-len(defaults)]
+    provided = required[0:len(injected.args)]
+    provided += injected.keywords.keys()
+
+    raise Exception("Error instantiating class {0} \nRequired: {1} \nProvided: {2} \nError:{3}".format(implementation_class.__name__ , str(required), str(provided), str(exception))), None, sys.exc_info()[2]
+
 
 class ServiceLoader():
     def __init__(self, name):
@@ -79,12 +93,14 @@ class ServiceLoader():
 
         def inject_method(self, fn, *args, **kwargs):
             isclass = inspect.isclass(fn)
-            injection_context = self._injection_context_factory.new(fn.__init__ if isclass else fn)
+            fn_to_call = fn.__init__ if isclass else fn
+            injection_context = self._injection_context_factory.new(fn_to_call)
 
-            pargs, kwargs = self._obj_provider.get_injection_pargs_kwargs(fn.__init__ if isclass else fn, injection_context, args, kwargs)
+            pargs, kwargs = self._obj_provider.get_injection_pargs_kwargs(fn_to_call, injection_context, args, kwargs)
             print "Injecting", fn
             print "pargs", pargs
             print "kwargs", kwargs
+
             return functools.partial(fn, *pargs, **kwargs)
 
         ## MONKEY PATCHING HAHAHAHA
@@ -143,6 +159,8 @@ class ServiceLoader():
         provider_spec = provider_spec()
         self._binding_specs.append(provider_spec)
 
+
+
     def register_implementation(self, implementation_class, register_super_classes=True, with_name=None, singleton=False, args=(), kwargs={}):
         """
         Registers implementation_class as the implementation for implementation class and all its base classes
@@ -200,7 +218,12 @@ class ServiceLoader():
             # Here we dynamically create a class that conforms to pinject's requirements
             def provider(self, **kwargs):
                 #args, kwargs = this._class_arg_mappings[implementation_class.__name__]
-                return this.object_graph.inject_method(implementation_class, *args, **kwargs)()
+                try:
+                    injected = this.object_graph.inject_method(implementation_class, *args, **kwargs)
+                    return injected()
+                except TypeError as e:
+                    handle_provider_error(implementation_class, injected, e)
+
             self.add_provider(name, provider, singleton)
 
         self._class_arg_mappings[implementation_class.__name__] = (args if args else (), kwargs if kwargs else {})

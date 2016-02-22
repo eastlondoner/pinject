@@ -155,6 +155,8 @@ def new_object_graph(
             binding_key_to_binding, collided_binding_key_to_bindings)
         binding_mapping.verify_requirements(required_bindings.get())
     except errors.Error as e:
+        if "expected type but got classobj" in e.message:
+            raise Exception("injected classes must inherit from object! \n" + e.message)
         if use_short_stack_traces:
             raise e
         else:
@@ -183,7 +185,7 @@ def _verify_types(seq, required_type, arg_name):
     for idx, elt in enumerate(seq):
         if type(elt) != required_type:
             raise errors.WrongArgElementTypeError(
-                arg_name, idx, required_type.__name__, type(elt).__name__)
+                arg_name, idx, required_type.__name__, type(elt).__name__, elt)
 
 
 def _verify_subclasses(seq, required_superclass, arg_name):

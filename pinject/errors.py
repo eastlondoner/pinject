@@ -266,10 +266,10 @@ class UnknownScopeError(Error):
 
 class WrongArgElementTypeError(Error):
 
-    def __init__(self, arg_name, idx, expected_type_desc, actual_type_desc):
+    def __init__(self, arg_name, idx, expected_type_desc, actual_type_desc, func=None):
         Error.__init__(
-            self, 'wrong type for element {0} of arg {1}: expected {2} but got'
-            ' {3}'.format(idx, arg_name, expected_type_desc, actual_type_desc))
+            self, 'constructing {4}: wrong type for element {0} of arg {1}: expected {2} but got'
+            ' {3}'.format(idx, arg_name, expected_type_desc, actual_type_desc, func))
 
 
 class WrongArgTypeError(Error):

@@ -60,7 +60,9 @@ class ObjectProvider(object):
         provider_indirection = arg_binding_key.provider_indirection
         try:
             provided = provider_indirection.StripIndirectionIfNeeded(Provide)
-        except TypeError:
+        except TypeError as e:
+            print e
+            raise
             # TODO(kurts): it feels like there may be other TypeErrors that
             # occur.  Instead, decorators.get_injectable_arg_binding_keys()
             # should probably do all appropriate validation?
