@@ -64,7 +64,7 @@ class ServiceLoader():
         self._binding_specs = []
         self._class_mappings = {}
         self._function_mappings = {}
-        self._class_arg_mappings = {}
+        # self._class_arg_mappings = {}
         self._classes = []
         self._modules = set()
 
@@ -210,14 +210,14 @@ class ServiceLoader():
         for name in (convert(name) for name in names if not name == implementation_class.__name__):
             # Here we dynamically create a class that conforms to pinject's requirements
             def provider(self):
-                args, kwargs = this._class_arg_mappings[implementation_class.__name__]
+                #args, kwargs = this._class_arg_mappings[implementation_class.__name__]
                 return this.object_graph.provide_class(implementation_class, *args, **kwargs)
             self.add_provider(name, provider, singleton)
 
         for name in (convert(name) for name in names if name == implementation_class.__name__):
             # Here we dynamically create a class that conforms to pinject's requirements
-            def provider(self, **kwargs):
-                args, kwargs = this._class_arg_mappings[implementation_class.__name__]
+            def provider(self):
+                #args, kwargs = this._class_arg_mappings[implementation_class.__name__]
                 try:
                     injected = this.object_graph.inject_method(implementation_class, *args, **kwargs)
                     return injected()
@@ -226,14 +226,14 @@ class ServiceLoader():
 
             self.add_provider(name, provider, singleton)
 
-        self._class_arg_mappings[implementation_class.__name__] = (args if args else (), kwargs if kwargs else {})
+        #self._class_arg_mappings[implementation_class.__name__] = (args if args else (), kwargs if kwargs else {})
 
 
 
     def load_class(self, clazz):
         clazz = self._class_mappings.get(clazz.__name__, clazz)
-        args, kwargs = self._class_arg_mappings[clazz.__name__]
-        return self.object_graph.provide_class(clazz, *args, **kwargs)
+        #args, kwargs = self._class_arg_mappings[clazz.__name__]
+        return self.object_graph.provide_class(clazz)
 
     def apply(self, fn_name, *args, **kwargs):
         fn, config_kwargs = self._function_mappings[fn_name]

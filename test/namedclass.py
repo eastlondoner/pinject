@@ -1,3 +1,5 @@
+import functools
+
 
 class BaseThing(object):
     def __init__(self):
@@ -84,12 +86,18 @@ class NeedyClassWhichNeedsFunction(BaseNeedyClass):
 class NeedyClassWhichNeedsFunctionInjection(BaseNeedyClass):
     def __init__(self, hello_from):
         super(BaseNeedyClass, self).__init__()
-        hello_from('dave')
+        self._injected = functools.partial(hello_from, 'dave')
+        self._injected()
+    def call_injected(self):
+        return self._injected()
 
 class NeedyClassWhichNeedsCurriedFunction(BaseNeedyClass):
     def __init__(self, hello_from):
         super(BaseNeedyClass, self).__init__()
         hello_from()
+        self.hello_from = hello_from
+    def call_curried(self):
+        return self.hello_from()
 
 
 
@@ -107,3 +115,7 @@ class NeedyClassWhichCausesError(BaseNeedyClass):
     def __init__(self, error_dependent_class):
         assert False # we should never get here
         super(BaseNeedyClass, self).__init__()
+
+class DependsOnNeedyClass(object):
+    def __init__(self, needy_class):
+        assert needy_class
