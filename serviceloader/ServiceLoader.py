@@ -51,7 +51,8 @@ def handle_provider_error(implementation_class, injected, exception):
     provided = required[0:len(injected.args)]
     provided += injected.keywords.keys()
 
-    raise Exception("Error instantiating class {0} \nRequired: {1} \nProvided: {2} \nError:{3}".format(implementation_class.__name__ , str(required), str(provided), str(exception))), None, sys.exc_info()[2]
+    required = required[1:] # remove self
+    raise Exception("Error instantiating class {0} \nRequired: {1} \nProvided: {2} \nMissing arguments: {3} \nError:{4}".format(implementation_class.__name__ , str(required), str(provided), str(list(set(required) - set(provided))), str(exception))), None, sys.exc_info()[2]
 
 
 class ServiceLoader():
