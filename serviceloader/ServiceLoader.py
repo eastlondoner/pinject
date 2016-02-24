@@ -88,8 +88,15 @@ class ServiceLoader():
             assert isclass
             arg_binding_key = arg_binding_keys.new(convert(clazz.__name__))
             injection_context = self._injection_context_factory.new(clazz.__init__)
+            super_classes = [c for c in inspect.getmro(clazz) if inspect.isclass(c) and c is not object]
 
-            c = self._obj_provider.provide_from_arg_binding_key(clazz, arg_binding_key, injection_context, pargs=args, kwargs=kwargs)
+            super_kwargs = dict()
+            for c in super_classes:
+                __, k = self._obj_provider.get_injection_pargs_kwargs(c.__init__, injection_context, (), {})
+                super_kwargs.update(k)
+
+            super_kwargs.update(kwargs)
+            c = self._obj_provider.provide_from_arg_binding_key(clazz, arg_binding_key, injection_context, pargs=args, kwargs=super_kwargs)
             return c #self._obj_provider.provide_class(c, injection_context, direct_init_pargs=args, direct_init_kwargs=kwargs)
 
         def inject_method(self, fn, *args, **kwargs):
@@ -217,10 +224,13 @@ class ServiceLoader():
 
         for name in (convert(name) for name in names if name == implementation_class.__name__):
             # Here we dynamically create a class that conforms to pinject's requirements
-            def provider(self):
+            def provider(self, **key_args):
                 #args, kwargs = this._class_arg_mappings[implementation_class.__name__]
+                actual_kwargs = dict()
+                actual_kwargs.update(key_args)
+                actual_kwargs.update(kwargs)
                 try:
-                    injected = this.object_graph.inject_method(implementation_class, *args, **kwargs)
+                    injected = this.object_graph.inject_method(implementation_class, *args, **actual_kwargs)
                     return injected()
                 except TypeError as e:
                     handle_provider_error(implementation_class, injected, e)
@@ -235,6 +245,7 @@ class ServiceLoader():
         clazz = self._class_mappings.get(clazz.__name__, clazz)
         #args, kwargs = self._class_arg_mappings[clazz.__name__]
         return self.object_graph.provide_class(clazz)
+
 
     def apply(self, fn_name, *args, **kwargs):
         fn, config_kwargs = self._function_mappings[fn_name]

@@ -1,6 +1,10 @@
 import functools
 
 
+class OtherThing(object):
+    def __init__(self):
+        pass
+
 class BaseThing(object):
     def __init__(self):
         pass
@@ -119,3 +123,20 @@ class NeedyClassWhichCausesError(BaseNeedyClass):
 class DependsOnNeedyClass(object):
     def __init__(self, needy_class):
         assert needy_class
+
+class InheritsNeedyClassUsesKwargsDirectly(NeedyClass):
+    def __init__(self, **kwargs):
+        print 'kwargs', kwargs
+        super(InheritsNeedyClassUsesKwargsDirectly, self).__init__(**kwargs)
+
+class InheritsNeedyClassUsesKwargsConvention(NeedyClassWithConvention):
+    def __init__(self, **kwargs):
+        print 'kwargs', kwargs
+        super(InheritsNeedyClassUsesKwargsConvention, self).__init__(**kwargs)
+
+
+class InheritsNeedyClassUsesSomeKwargs(BaseNeedyClass):
+    def __init__(self, other_thing, **kwargs):
+        print 'kwargs', kwargs
+        super(InheritsNeedyClassUsesSomeKwargs, self).__init__(**kwargs)
+        assert other_thing

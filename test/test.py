@@ -5,8 +5,6 @@ from namedclass import *
 from functions import *
 
 
-
-
 sl = fetch_service_loader('error_handling')
 
 sl.register_implementation(ErrorCausingClass)
@@ -19,6 +17,7 @@ try:
     implementation_1 = sl.load_class(BaseNeedyClass)
 except Exception, e:
     error_occured = True
+    print e.message
     assert "Error instantiating class ErrorCausingClass" in e.message
 
 assert error_occured
@@ -150,6 +149,43 @@ sl.register_implementation(NeedyClass, register_super_classes=True, kwargs=dict(
 sl.register_implementation(BaseThing)
 
 implementation = sl.load_class(DependsOnNeedyClass)
+
+
+
+sl = fetch_service_loader('kwargs in inheritance')
+sl.register_implementation(NamedClass)
+sl.register_implementation(InheritsNeedyClassUsesKwargsDirectly, kwargs=dict(data="hi"))
+
+assert sl.load_class(InheritsNeedyClassUsesKwargsDirectly)
+
+
+
+sl = fetch_service_loader('kwargs in inheritance 2')
+sl.register_implementation(NamedClass)
+sl.register_implementation(InheritsNeedyClassUsesKwargsConvention)
+
+assert sl.load_class(InheritsNeedyClassUsesKwargsConvention)
+
+
+
+sl = fetch_service_loader('kwargs in inheritance 3')
+sl.register_implementation(NamedClass)
+sl.register_implementation(InheritsNeedyClassUsesKwargsConvention)
+sl.register_implementation(DependsOnNeedyClass)
+
+assert sl.load_class(DependsOnNeedyClass)
+
+
+
+sl = fetch_service_loader('kwargs in inheritance 4')
+sl.register_implementation(NamedClass)
+sl.register_implementation(OtherThing)
+sl.register_implementation(InheritsNeedyClassUsesSomeKwargs)
+sl.register_implementation(DependsOnNeedyClass)
+sl.register_module(moduleclasses)
+
+assert sl.load_class(InheritsNeedyClassUsesSomeKwargs)
+assert sl.load_class(DependsOnNeedyClass)
 
 
 

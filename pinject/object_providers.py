@@ -99,10 +99,10 @@ class ObjectProvider(object):
             lambda abk: self.provide_from_arg_binding_key(
                 fn, abk, injection_context))
         duplicated_args = set(di_kwargs.keys()) & set(direct_kwargs.keys())
-        if duplicated_args:
-            raise errors.DirectlyPassingInjectedArgsError(
-                duplicated_args, injection_context.get_injection_site_desc(),
-                fn)
+        #if duplicated_args:
+        #    raise errors.DirectlyPassingInjectedArgsError(
+        #        duplicated_args, injection_context.get_injection_site_desc(),
+        #        fn)
         all_kwargs = dict(di_kwargs)
         all_kwargs.update(direct_kwargs)
         return direct_pargs, all_kwargs
