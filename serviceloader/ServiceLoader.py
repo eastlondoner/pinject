@@ -10,6 +10,9 @@ from threading import Lock
 import tdash as _
 import pinject.arg_binding_keys as arg_binding_keys
 
+import logging
+log = logging.getLogger('serviceloader')
+
 
 first_cap_re = re.compile('(.)([A-Z][a-z]+)')
 all_cap_re = re.compile('([a-z0-9])([A-Z])')
@@ -105,9 +108,9 @@ class ServiceLoader():
             injection_context = self._injection_context_factory.new(fn_to_call)
 
             pargs, kwargs = self._obj_provider.get_injection_pargs_kwargs(fn_to_call, injection_context, args, kwargs)
-            print "Injecting", fn
-            print "pargs", pargs
-            print "kwargs", kwargs
+            log.info("Injecting %s" % str(fn))
+            log.info("pargs %s" % str(pargs))
+            log.info("kwargs %s" % str(kwargs))
 
             return functools.partial(fn, *pargs, **kwargs)
 
@@ -203,7 +206,7 @@ class ServiceLoader():
         names = list(set(names) - {'object'})
         map(lambda name: self._class_mappings.update({name:implementation_class}), names)
 
-        print "Registering {} for :".format(implementation_class), names
+        log.info("Registering {} for : %s".format(implementation_class) % str(names))
 
         #def register(bind, require):
         #     bind(convert(implementation_class.__name__), to_class=implementation_class,  in_scope=pinject.SINGLETON if singleton else pinject.PROTOTYPE)
