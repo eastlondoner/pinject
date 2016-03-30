@@ -91,10 +91,11 @@ class ServiceLoader():
             assert isclass
             arg_binding_key = arg_binding_keys.new(convert(clazz.__name__))
             injection_context = self._injection_context_factory.new(clazz.__init__)
-            super_classes = [c for c in inspect.getmro(clazz) if inspect.isclass(c) and c is not object]
+            super_classes = [c for c in inspect.getmro(clazz) if (inspect.isclass(c) and inspect.ismethod(c.__init__))]
 
             super_kwargs = dict()
             for c in super_classes:
+                print c, inspect.isclass(c)
                 __, k = self._obj_provider.get_injection_pargs_kwargs(c.__init__, injection_context, (), {})
                 super_kwargs.update(k)
 

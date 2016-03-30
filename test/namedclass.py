@@ -15,6 +15,19 @@ class NamedClass(BaseThing):
         super(NamedClass, self).__init__()
 
 
+class NamedClassExtendsDict(dict):
+    pass
+
+class NamedClassExtendsExtendsDict(NamedClassExtendsDict):
+    def __init__(self, mock_values):
+        for k,v in mock_values.iteritems():
+            self[k] = v
+
+
+class DependsOnExtendsDict(object):
+    def __init__(self, named_class_extends_extends_dict):
+        self.foo = named_class_extends_extends_dict
+
 class ErrorCausingClass(BaseThing):
     def __init__(self, other):
         super(ErrorCausingClass, self).__init__()
@@ -134,8 +147,14 @@ class InheritsNeedyClassUsesKwargsConvention(NeedyClassWithConvention):
         print 'kwargs', kwargs
         super(InheritsNeedyClassUsesKwargsConvention, self).__init__(**kwargs)
 
+class NeedyClassWithConvention(BaseNeedyClass):
+    def __init__(self, thing,
+                 optional_value=None):
+        super(BaseNeedyClass, self).__init__()
+        print thing
+        assert thing
 
-class InheritsNeedyClassUsesSomeKwargs(BaseNeedyClass):
+class InheritsNeedyClassUsesSomeKwargs(NeedyClassWithConvention):
     def __init__(self, other_thing, **kwargs):
         print 'kwargs', kwargs
         super(InheritsNeedyClassUsesSomeKwargs, self).__init__(**kwargs)
