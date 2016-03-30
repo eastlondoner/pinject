@@ -18,6 +18,9 @@ class NamedClass(BaseThing):
 class NamedClassExtendsDict(dict):
     pass
 
+class ExtendsDict(dict):
+    pass
+
 class NamedClassExtendsExtendsDict(NamedClassExtendsDict):
     def __init__(self, mock_values):
         for k,v in mock_values.iteritems():

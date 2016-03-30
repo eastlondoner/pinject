@@ -204,7 +204,7 @@ class ServiceLoader():
 
         names += [name.replace('Base','').replace('Abstract','') for name in names if name.startswith('Base') or name.startswith('Abstract')]
 
-        names = list(set(names) - {'object'})
+        names = list(set(names) - {'object', 'dict'})
         map(lambda name: self._class_mappings.update({name:implementation_class}), names)
 
         log.info("Registering {} for : %s".format(implementation_class) % str(names))

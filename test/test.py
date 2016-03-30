@@ -192,6 +192,7 @@ sl = fetch_service_loader('dict in inheritance')
 mock_values = {'snapshot_details': {'snapshot_path': 'features'}}
 sl.register_implementation(NamedClassExtendsExtendsDict, kwargs={'mock_values': mock_values}, singleton=True)
 sl.register_implementation(DependsOnExtendsDict)
+sl.register_implementation(ExtendsDict)
 
 assert sl.load_class(DependsOnExtendsDict)
 assert sl.load_class(NamedClassExtendsExtendsDict)['snapshot_details']
