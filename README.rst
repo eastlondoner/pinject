@@ -1,7 +1,14 @@
 =========
- Pinject
+ Warning
 =========
 
+THIS IS A FORK OF `google/pinject <https://github.com/google/pinject/>`_.
+
+I have (and will continue) made arbitrary (and opinionated) changes without necessarily updating documentation or tests.
+
+=========
+ Pinject
+=========
 Pinject is a dependency injection library for python.
 
 The primary goal of Pinject is to help you assemble objects into graphs in an
